@@ -11,14 +11,14 @@ Temel oalrak asagidaki ozelliklere sahiptir :
   - Hiz/yonlenme vb
   - Uydu sayisi
   - Fix durumu
--Smart beacon ozelligi ile hiz ile orantili olarak gonderme sikligini degistirir
--Verileri EEPROM'da saklar
--PC Yazilimi ile tum ayarlari degistirilebilir
+- Smart beacon ozelligi ile hiz ile orantili olarak gonderme sikligini degistirir
+- Verileri EEPROM'da saklar
+- PC Yazilimi ile tum ayarlari degistirilebilir
 
 Eklenmesi planlanan ozellikler :
--APRS dinleme ozelligi
--Dorji radyolari yonetebilme ozelligi
--Display ekelenebilir
+- APRS dinleme ozelligi
+- Dorji radyolari yonetebilme ozelligi
+- Display ekelenebilir
 
 
 PC Yonetim arayuzu programi "hymTR Ayar Programi" ayri bir repository icindedir.
