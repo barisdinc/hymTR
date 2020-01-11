@@ -246,7 +246,7 @@ void VarsayilanAyarlar() {
   strcpy(Ayarlar.APRS_Path2, "WIDE2 ");
   Ayarlar.APRS_Path2SSID = '1';
   Ayarlar.APRS_Sembolu = '>';
-  Ayarlar.APRS_SembolTabi = '\\';
+  Ayarlar.APRS_SembolTabi = '/';
   Ayarlar.APRS_BeaconTipi = 3;
   Ayarlar.APRS_BeaconSuresi = 255;
   strcpy(Ayarlar.APRS_Mesaj, "TAMSAT hymTR APRS Tracker");
@@ -262,6 +262,7 @@ void eepromaYaz() {
   for (unsigned int i=0; i<sizeof(Ayarlar); i++) {
     EEPROM.write(i, *((char*)&Ayarlar + i));
   }
+  Serial.println("Eeproma yazildi");
 }
 
 /*
@@ -269,89 +270,98 @@ void eepromaYaz() {
  */
 void konfigurasyonYazdir()
 {
+  /*
   Serial.println("Mevcut Konfigurasyon Bilgileri");
   Serial.println("------------------------------");
-  Serial.print("Cagri Isareti : ");  Serial.println(Ayarlar.APRS_CagriIsareti);
-  Serial.print("         SSID : -"); Serial.println(Ayarlar.APRS_CagriIsaretiSSID);
-  Serial.print("        Hedef : ");  Serial.println(Ayarlar.APRS_Destination);
-  Serial.print("   Hedef SSID : -"); Serial.println(Ayarlar.APRS_DestinationSSID);  
-  Serial.print("        Path1 : ");  Serial.println(Ayarlar.APRS_Path1);
-  Serial.print("   Path1 SSID : -"); Serial.println(Ayarlar.APRS_Path1SSID);
-  Serial.print("        Path2 : ");  Serial.println(Ayarlar.APRS_Path2);
-  Serial.print("   Path2 SSID : -"); Serial.println(Ayarlar.APRS_Path2SSID);
-  Serial.print("       Sembol : ");  Serial.println(Ayarlar.APRS_Sembolu);
-  Serial.print("  Sembol Tipi : ");  Serial.println(Ayarlar.APRS_SembolTabi);
-  Serial.print("  Beacon Tipi : ");  Serial.println(Ayarlar.APRS_BeaconTipi); //0=sure beklemeli, 1=Smart Beacon
-  Serial.print("Beacon Suresi : ");  Serial.println(Ayarlar.APRS_BeaconSuresi);
-  Serial.print("     GPS Hizi : ");  Serial.println(Ayarlar.APRS_GPSSeriHizi);    
-  Serial.print("        Mesaj : ");  Serial.println(Ayarlar.APRS_Mesaj);
-  Serial.print("Kontrol (CRC) : ");  Serial.println(Ayarlar.CheckSum);   
+  */
+  //Serial.print("Cagri Isareti : ");  
+  Serial.println(Ayarlar.APRS_CagriIsareti);
+  //Serial.print("         SSID : -"); 
+  Serial.println(Ayarlar.APRS_CagriIsaretiSSID);
+  //Serial.print("        Hedef : ");  
+  Serial.println(Ayarlar.APRS_Destination);
+  //Serial.print("   Hedef SSID : -"); 
+  Serial.println(Ayarlar.APRS_DestinationSSID);  
+  //Serial.print("        Path1 : ");  
+  Serial.println(Ayarlar.APRS_Path1);
+  //Serial.print("   Path1 SSID : -"); 
+  Serial.println(Ayarlar.APRS_Path1SSID);
+  //Serial.print("        Path2 : ");  
+  Serial.println(Ayarlar.APRS_Path2);
+  //Serial.print("   Path2 SSID : -"); 
+  Serial.println(Ayarlar.APRS_Path2SSID);
+  //Serial.print("       Sembol : ");  
+  Serial.println(Ayarlar.APRS_Sembolu);
+  //Serial.print("  Sembol Tipi : ");  
+  Serial.println(Ayarlar.APRS_SembolTabi);
+  //Serial.print("  Beacon Tipi : ");  
+  Serial.println(Ayarlar.APRS_BeaconTipi); //0=sure beklemeli, 1=Smart Beacon
+  //Serial.print("Beacon Suresi : ");  
+  Serial.println(Ayarlar.APRS_BeaconSuresi);
+  //Serial.print("     GPS Hizi : ");  
+  Serial.println(Ayarlar.APRS_GPSSeriHizi);    
+  //Serial.print("        Mesaj : ");  
+  Serial.println(Ayarlar.APRS_Mesaj);
+  //Serial.print("Kontrol (CRC) : ");  
+  Serial.println(Ayarlar.CheckSum);   
+  
 }
 
 void KomutSatiriCalistir() {
   byte komut;
 
   Serial.println(F("hymTR Konfigurasyon Arayuzu"));
-  Serial.print('>');
+  //Serial.print('>');
   delay(50);
 
   while (komut != 'Q') {
-    digitalWrite(13, !digitalRead(13));
+    //digitalWrite(13, !digitalRead(13)); //Gonderme yaptigimizda tracker i konsol modundan cikariyoruz
     delay(50);
     if (Serial.available()) {
       komut = Serial.read();
 
-      if (komut == '!') {
-        Serial.print('>');
-      }
-
-      if (komut == 'O') {
-        eepromOku();    
-        Serial.write('>');
-      }
-
       if (komut == 'R') {
         eepromOku();    
         seriyeGonder();
-        Serial.write('>');
       }
 
       if (komut == 'P') {
         konfigurasyonYazdir();    
-        Serial.write('>');
       }
 
       if (komut == 'W') {
         Serial.println(F("Konfigurasyon kaydediliyor..."));
         delay(500);
-        Serial.print(F("VERSIYON"));
+        Serial.print(F("Cihaz Versiyon:"));
         Serial.println(VERSIYON);
-       
+       konfigurasyonYazdir();
         if (seridenAl()) {
+              Serial.println("Seriden okuma basarili...");
+              konfigurasyonYazdir();
               eepromaYaz();
             } else {
           //Serial.println(F("hata  olustu..."));
         }
-        Serial.write('>');
       }
       
       if (komut == 'D') {
         Serial.println(F("Varsayilan konfigurasyona donuluyor"));
         VarsayilanAyarlar();        
-        Serial.write('>');
       }
-    }
-  }
-  Serial.println(F("Konfigurasyon midundan cikiliyor"));
-}
+      Serial.println('>');
+    } //Serial.available
+ } //komut != Q
+ Serial.println(F("Konfigurasyon midundan cikiliyor"));
+} //komutSatiriCalistir
+
 
 /*
- * seri olarak okunan byte lar icinden parametreleri ayiklamak icin
+ * seri olarak okunan byte lari 0x09 veya 0x04 e kadar olanini geri dondurmek icin
  */
 void parametreOku(char *szParam, int iMaxLen) {
   byte c;
   int iSize;
-  unsigned long iMilliTimeout = millis() + 1000; 
+  unsigned long iMilliTimeout = millis() + 2000; 
 
   for (iSize=0; iSize<iMaxLen; iSize++) szParam[iSize] = 0x00; 
   iSize = 0;   
@@ -362,10 +372,12 @@ void parametreOku(char *szParam, int iMaxLen) {
       c = Serial.read();
 
       if (c == 0x09 || c == 0x04) {
+        Serial.println();
         return;
       }
       if (iSize < iMaxLen) {
         szParam[iSize] = c;
+        Serial.print('[');Serial.print(c);Serial.print(']');
         iSize++;
       }
     }
@@ -374,23 +386,27 @@ void parametreOku(char *szParam, int iMaxLen) {
 }
 
 bool seridenAl() {
-  char szParam[45];
+  char szParam[45]; //en uzun mesaajdan daha uzun 45>41
   unsigned long iMilliTimeout = millis() + 10000;    
   while (millis() < iMilliTimeout) {
-  while (!Serial.available()) {
-    }
+  while (!Serial.available()) { } //veri gelmesini bekle
     if (Serial.read() == 0x01) {
       parametreOku(szParam, sizeof(szParam));
       if (strcmp(szParam, VERSIYON) != 0) {
+        Serial.print("   PC Versiyon:");
         Serial.println(szParam);
+          Serial.println("E99 Versiyonlar uyumsuz...");
         return false;
       }
-
+    
       parametreOku(szParam, sizeof(Ayarlar.APRS_CagriIsareti));    //CagriIsareti
       strcpy(Ayarlar.APRS_CagriIsareti, szParam);
+      Serial.print("CagriAdi: ");Serial.print(Ayarlar.APRS_CagriIsareti);Serial.println("-");
       parametreOku(szParam, 1);    //CagriIsareti SSID
       Ayarlar.APRS_CagriIsaretiSSID = szParam[0];
+      Serial.print("CagrSSID: ");Serial.print(Ayarlar.APRS_CagriIsaretiSSID);Serial.println("-");
 
+/*
       parametreOku(szParam, sizeof(Ayarlar.APRS_Destination));    //Destination
       strcpy(Ayarlar.APRS_Destination, szParam);
       parametreOku(szParam, 1);    //SSID
@@ -405,18 +421,18 @@ bool seridenAl() {
       strcpy(Ayarlar.APRS_Path2, szParam);
       parametreOku(szParam, 1);    //SSID
       Ayarlar.APRS_Path2SSID = szParam[0];
-
-      //Symbol/Page
+*/
+      //Symbol/Tab
       parametreOku(szParam, 1);
       Ayarlar.APRS_Sembolu = szParam[0];
       parametreOku(szParam, 1);
       Ayarlar.APRS_SembolTabi = szParam[0];
 
-      //BeaconType
+      //BeaconTipi
       parametreOku(szParam, sizeof(szParam));
       Ayarlar.APRS_BeaconTipi = atoi(szParam);
 
-      //Simple Beacon Delay
+      //Beacon Suresi
       parametreOku(szParam, sizeof(szParam));
       Ayarlar.APRS_BeaconSuresi = atoi(szParam);
 
@@ -434,51 +450,52 @@ bool seridenAl() {
         iCheckSum += Ayarlar.APRS_CagriIsareti[i];
       }
       Ayarlar.CheckSum = iCheckSum;
-      return true;    //done reading in the file
-    }
-  }
+      return true;    //OKuma tamamlandi
+    } // read 0x01
+  } //millis
   return false;
+
 }
 
 /*
  * Elimizdeki CONFIG degiskenini byte byte PC'ye gonderiyoruz
  */
 void seriyeGonder() {
-        Serial.write(0x01);
+        Serial.write("{");    //JSON Baslangici
+        Serial.write("'V':'");
         Serial.write(VERSIYON);
-        Serial.write(0x09);
+        Serial.write("','CagriIsareti':'");
         Serial.write(Ayarlar.APRS_CagriIsareti);
-        Serial.write(0x09);
+        Serial.write("','CagriIsaretiSSID':");
         Serial.write(Ayarlar.APRS_CagriIsaretiSSID);
-        Serial.write(0x09);
+        Serial.write(",'Destination':'");
         Serial.write(Ayarlar.APRS_Destination);
-        Serial.write(0x09);
+        Serial.write("','DestinationSSID':");
         Serial.write(Ayarlar.APRS_DestinationSSID);
-        Serial.write(0x09);
+        Serial.write(",'Path1':'");
         Serial.write(Ayarlar.APRS_Path1);
-        Serial.write(0x09);
+        Serial.write("','Path1SSID':");
         Serial.write(Ayarlar.APRS_Path1SSID);
-        Serial.write(0x09);
+        Serial.write(",'Path2':'");
         Serial.write(Ayarlar.APRS_Path2);
-        Serial.write(0x09);
+        Serial.write("','Path2SSID':");
         Serial.write(Ayarlar.APRS_Path2SSID);
-        Serial.write(0x09);
         //Symbol
+        Serial.write(",'Sembol':'");
         Serial.write(Ayarlar.APRS_Sembolu);
-        Serial.write(0x09);
+        Serial.write("','SembolTabi':'");
         Serial.write(Ayarlar.APRS_SembolTabi);
-        Serial.write(0x09);
         //Beacon Type
+        Serial.write("','BeaconTipi':");
         Serial.print(Ayarlar.APRS_BeaconTipi, DEC);
-        Serial.write(0x09);
+        Serial.write(",'BeaconSuresi':");
         //Beacon - Simple Delay
         Serial.print(Ayarlar.APRS_BeaconSuresi, DEC);
-        Serial.write(0x09);
         //Status Message
+        Serial.write(",'Mesaj':'");
         Serial.write(Ayarlar.APRS_Mesaj);
-        Serial.write(0x09);
         //GPS Serial Data
+        Serial.write("','GPSHizi':");
         Serial.print(Ayarlar.APRS_GPSSeriHizi, DEC);      
-        Serial.write(0x09);
-        Serial.write(0x04);      //End of string
+        Serial.write("}"); //JSON Sonu 
 }
