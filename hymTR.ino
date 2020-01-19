@@ -52,6 +52,14 @@ struct APRS_Ayarlari {
   unsigned long APRS_BeaconSuresi;
   unsigned int  APRS_GPSSeriHizi;    
   char APRS_Mesaj[41];
+  //gps_varyok
+  //lat
+  //lon
+  //alt
+  //P : power
+  //G : Gain
+  //H : height
+  //  : Directivity
   unsigned int CheckSum;    //Cagri isaretinin byte toplamini kullaniyoruz
 };
 APRS_Ayarlari Ayarlar;
@@ -152,9 +160,11 @@ void setPacket()
 {
     //    APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
     char myCALL[6];// = "      ";
-    char Lat[8];// = "        ";
-    char Lon[9];// = "         ";
+    char Lat[9];// = "        ";
+    char Lon[] = "         ";
     snprintf(myCALL,sizeof(myCALL),"%s",Ayarlar.APRS_CagriIsareti);
+//    snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(60.0559166,true));
+//    snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(24.901,false));
     snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(fix.latitude(),true));
     snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(fix.longitude(),false));
     APRS_setLat(Lat);
@@ -179,18 +189,18 @@ char* deg_to_nmea(float deg, boolean is_lat) {
   if (deg < 0) is_negative=1;
   deg = abs(deg);
   float minute = (deg - (int) deg) * 60;
-  sprintf(conv_buf,"%03d%02d.%02d",(int)deg,(int)minute,(int)(100*minute)%100);
-  conv_buf[9] = '\0';
+  sprintf(conv_buf,"%03d%02d.%02d ",(int)deg,(int)minute,(int)(100*minute)%100);
+  //conv_buf[9] = '\0';
   if (is_lat) {
     if (is_negative) { conv_buf[8]='S';}
     else conv_buf[8]='N';
-    //DEBUG_PORT.println(conv_buf+1);
+    DEBUG_PORT.println(conv_buf+1);
     return conv_buf+1;
     }
   else {
     if (is_negative) {conv_buf[8]='W';}
     else conv_buf[8]='E';
-    //DEBUG_PORT.println(conv_buf);
+    DEBUG_PORT.println(conv_buf);
     return conv_buf;
     }
 }
