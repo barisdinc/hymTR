@@ -66,9 +66,18 @@ void konfigurasyonYazdir();
 void parametreOku(char *szParam, int iMaxLen);
 bool seridenAl();
 void seriyeGonder();
+void setPacket();
+void sndPacket();
+int getGpsData(boolean *newDataLoc);
 
 static void GPSisr( uint8_t c )
 {
+  char *xx ;
+   sprintf(xx, "%c",c);
+    DEBUG_PORT.print(*xx);
+    DEBUG_PORT.print(c);
+
+
   gps.handle( c );
 } // GPSisr
 
@@ -76,14 +85,14 @@ void setup()
 {
   eepromOku();
   APRS_init();
+  //doReadPrams();
   char myCALL[] = "TA7W";
-  char Lat[] = "2134.00N";
-  char Lon[] = "01234.00E";
-  APRS_setCallsign(myCALL, 9);
-  APRS_setLat(Lat);
-  APRS_setLon(Lon);
-  //APRS_setPreamble(1000);
-  //APRS_setTail(50);
+//  APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
+  APRS_setCallsign(myCALL,9);
+  //APRS_setLat(Lat);
+  //APRS_setLon(Lon);
+  APRS_setPreamble(500);
+  APRS_setTail(50);
 
   DEBUG_PORT.begin(115200);
   while (!DEBUG_PORT);
@@ -92,23 +101,12 @@ void setup()
   gpsPort.begin(9600);
 }
 
-int getGpsData(boolean *newDataLoc)
-{
- while (gps.available( gpsPort )) {
-    fix = gps.read();
-    if (fix.valid.location && fix.valid.time && fix.valid.altitude) {
-      *newDataLoc = true;
-      return fix.dateTime.minutes*60+fix.dateTime.seconds;
-    }
-  }
-return -1; 
-}
-
-
 
 void loop()
 {
   boolean newData = false;
+  int smartBeaconInterval = 60;
+
   int gpsMinSec = getGpsData(&newData);
   //if (gps.available()) {
     // Print all the things!
@@ -117,23 +115,25 @@ void loop()
 
     if (gps.overrun()) {
     gps.overrun( false );
-    DEBUG_PORT.println( F("DATA OVERRUN: took too long to print GPS data!") );
+    DEBUG_PORT.println( F("DATA OVERRUN: uzun sure GPS datasi okunmadi...!") );
   }
-  
+  /*
+  //Hiza gore Smart beacon suresi ayarlama
+  if (newData) {
+    if (fix.speed_kph() <= 10)                            smartBeaconInterval = 60 * 5;
+    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = 60 * 3;
+    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = 60 * 2;
+    if (fix.speed_kph() > 100)                            smartBeaconInterval = 60 * 1;
+  }
+*/
+  smartBeaconInterval = 20;
+//  if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
   if (newData && ((gpsMinSec % 20) == 0))
   {
     newData = false;
     DEBUG_PORT.println("sending....");
-    APRS_setLat((char*)deg_to_nmea(fix.latitude(), true));
-    APRS_setLon((char*)deg_to_nmea(fix.longitude(), false));
-    char commentS[40]="                                       ";
-//    snprintf(commentS,"/A=000000 %s",comment);
-    snprintf(commentS,sizeof(commentS),"/A=000000 %s",comment);
-    DEBUG_PORT.println(commentS);
-    APRS_sendLoc(commentS, strlen(commentS));
-    while(bitRead(PORTB,5)); //Wait for transmission to be completed
-    DEBUG_PORT.println("sent....");
-    //delay(25000);
+    setPacket();
+    sndPacket();
   }
   //DEBUG_PORT.print(".");
 
@@ -142,6 +142,7 @@ void loop()
    * Burada seri porttan komutlari okuyoruz
    * TODO: bunu interrupt a tasimaliyiz
    */
+  /*
   while (DEBUG_PORT.available())
   {
     char komut = DEBUG_PORT.read();
@@ -149,7 +150,31 @@ void loop()
       KomutSatiriCalistir();
       }
   }
+*/
 
+}
+
+void setPacket()
+{
+    //    APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
+    char myCALL[] = "TA7W";
+    APRS_setCallsign(myCALL,9);
+    APRS_setPreamble(500);
+    APRS_setTail(50);
+    APRS_setLat((char*)deg_to_nmea(fix.latitudeL(), true));
+    APRS_setLon((char*)deg_to_nmea(fix.longitudeL(), false));
+    //DEBUG_PORT.println(fix.latitudeL());
+
+}
+
+void sndPacket()
+{
+    char commentS[40]="                                       ";
+    //fix.heading();
+    snprintf(commentS,sizeof(commentS),"/A=%06d %s",fix.alt.whole,Ayarlar.APRS_Mesaj);
+    APRS_sendLoc(comment, strlen(comment));
+    while(bitRead(PORTB,5)); //Wait for transmission to be completed
+    //delay(25000);
 
 }
 
@@ -316,7 +341,7 @@ void KomutSatiriCalistir() {
       DEBUG_PORT.println('#');
     } //DEBUG_PORT.available
  } //komut != Q
- DEBUG_PORT.println(F("Konfigurasyon midundan cikiliyor"));
+ DEBUG_PORT.println(F("Konfigurasyon modundan cikiliyor"));
 } //komutSatiriCalistir
 
 
@@ -461,3 +486,81 @@ void seriyeGonder() {
         DEBUG_PORT.print(F("}")); //JSON Sonu 
 }
 
+
+int getGpsData(boolean *newDataLoc)
+{
+ while (gps.available( gpsPort )) {
+    fix = gps.read();
+    DEBUG_PORT.println(fix.valid.location);
+    DEBUG_PORT.println(fix.valid.time);
+    DEBUG_PORT.println(fix.valid.altitude);  
+    DEBUG_PORT.println(fix.latitude());
+    DEBUG_PORT.println(fix.dateTime.seconds);
+    
+    if (fix.valid.location && fix.valid.time && fix.valid.altitude) {
+      *newDataLoc = true;
+      DEBUG_PORT.println("veri var");
+      return fix.dateTime.minutes*60+fix.dateTime.seconds;
+    }
+  }
+return -1; 
+}
+
+
+//-----------------
+//  Print utilities
+/*
+static void repeat( char c, int8_t len )
+{
+  for (int8_t i=0; i<len; i++)
+    DEBUG_PORT.write( c );
+}
+static void printInvalid( int8_t len )
+{
+  DEBUG_PORT.write( ' ' );
+  repeat( '*', abs(len)-1 );
+}
+
+static void print( float val, bool valid, int8_t len, int8_t prec )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    char s[16];
+    dtostrf( val, len, prec, s );
+    DEBUG_PORT.print( s );
+  }
+}
+static void print( int32_t val, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    char s[16];
+    ltoa( val, s, 10 );
+    repeat( ' ', len - strlen(s) );
+    DEBUG_PORT.print( s );
+  }
+}
+
+static void print( const __FlashStringHelper *str, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    int slen = strlen_P( (const char *) str );
+    repeat( ' ', len-slen );
+    DEBUG_PORT.print( str );
+  }
+}
+
+static void print( const NeoGPS::time_t & dt, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    DEBUG_PORT.write( ' ' );
+    Serial << dt; 
+  }
+}
+*/
