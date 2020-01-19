@@ -128,8 +128,8 @@ void loop()
     if (fix.speed_kph() > 100)                            smartBeaconInterval = 60 * 1;
   }
 
+//SMART BEACON zamanlaamasi yapmasini istemiyorsak alttaki satirda bir sure (saniye) belirtebiliriz
   smartBeaconInterval = 20;
-//  if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
   if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
   {
     newData = false;
@@ -172,6 +172,14 @@ void setPacket()
     APRS_setCallsign(myCALL,Ayarlar.APRS_CagriIsaretiSSID);
     APRS_setPreamble(1000);
     APRS_setTail(50);
+    APRS_setPower(1);
+    APRS_setHeight(1);
+    APRS_setGain(1);
+    APRS_setDirectivity(1);
+    APRS_setSpeed(45);
+    APRS_setDirection(89);
+    APRS_setCourse(12);
+
 }
 
 void sndPacket()
@@ -180,7 +188,7 @@ void sndPacket()
     //fix.heading();
     DEBUG_PORT.println(fix.alt.whole);
     snprintf(commentS,sizeof(commentS),"/A=%06d %s",(int)(fix.alt.whole*3.28),Ayarlar.APRS_Mesaj);
-    APRS_sendLoc(commentS, strlen(commentS));
+    APRS_sendLoc(commentS, strlen(commentS),'d'); // ' ' normal, 'p' PHG, 'c' CSE/SPD, 'd' DIR/SPD 
     while(bitRead(PORTB,5)); //Wait for transmission to be completed
 
 }
