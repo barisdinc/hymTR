@@ -178,8 +178,9 @@ void sndPacket()
 {
     char commentS[40]="                                       ";
     //fix.heading();
-    snprintf(commentS,sizeof(commentS),"/A=%06d %s",fix.alt.whole,Ayarlar.APRS_Mesaj);
-    APRS_sendLoc(comment, strlen(comment));
+    DEBUG_PORT.println(fix.alt.whole);
+    snprintf(commentS,sizeof(commentS),"/A=%06d %s",(int)(fix.alt.whole*3.28),Ayarlar.APRS_Mesaj);
+    APRS_sendLoc(commentS, strlen(commentS));
     while(bitRead(PORTB,5)); //Wait for transmission to be completed
 
 }
@@ -194,13 +195,13 @@ char* deg_to_nmea(float deg, boolean is_lat) {
   if (is_lat) {
     if (is_negative) { conv_buf[8]='S';}
     else conv_buf[8]='N';
-    DEBUG_PORT.println(conv_buf+1);
+    //DEBUG_PORT.println(conv_buf+1);
     return conv_buf+1;
     }
   else {
     if (is_negative) {conv_buf[8]='W';}
     else conv_buf[8]='E';
-    DEBUG_PORT.println(conv_buf);
+    //DEBUG_PORT.println(conv_buf);
     return conv_buf;
     }
 }
