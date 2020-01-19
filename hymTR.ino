@@ -163,8 +163,6 @@ void setPacket()
     char Lat[9];// = "        ";
     char Lon[] = "         ";
     snprintf(myCALL,sizeof(myCALL),"%s",Ayarlar.APRS_CagriIsareti);
-//    snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(60.0559166,true));
-//    snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(24.901,false));
     snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(fix.latitude(),true));
     snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(fix.longitude(),false));
     APRS_setLat(Lat);
@@ -176,19 +174,22 @@ void setPacket()
     APRS_setHeight(1);
     APRS_setGain(1);
     APRS_setDirectivity(1);
-    APRS_setSpeed(45);
-    APRS_setDirection(89);
-    APRS_setCourse(12);
-
+    int heading = (int)fix.heading();
+    int speed = (int)fix.speed_kph();
+    APRS_setDirection(heading);
+    APRS_setCourse(heading);
+    APRS_setSpeed(speed);
 }
 
 void sndPacket()
 {
     char commentS[40]="                                       ";
-    //fix.heading();
-    DEBUG_PORT.println(fix.alt.whole);
     snprintf(commentS,sizeof(commentS),"/A=%06d %s",(int)(fix.alt.whole*3.28),Ayarlar.APRS_Mesaj);
-    APRS_sendLoc(commentS, strlen(commentS),'d'); // ' ' normal, 'p' PHG, 'c' CSE/SPD, 'd' DIR/SPD 
+    APRS_sendLoc(commentS, strlen(commentS),' '); // ' ' no extension, 'p' PHG, 'c' CSE/SPD, 'd' DIR/SPD 
+    //Buraya bir akil ekleyecegim... su sekilde
+    //Eger hizi degismisse 'c' veya 'd' paketi gonderecegim
+    //eger degismemisse standart paket gonderecegim
+    //belirli araliklarla da PHG paketi gonderip istasyonu tanitacagiz
     while(bitRead(PORTB,5)); //Wait for transmission to be completed
 
 }
