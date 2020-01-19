@@ -69,7 +69,6 @@ void seriyeGonder();
 void setPacket();
 void sndPacket();
 int getGpsData(boolean *newDataLoc);
-
 static void GPSisr( uint8_t c )
 {
   char *xx ;
