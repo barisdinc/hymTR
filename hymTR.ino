@@ -57,8 +57,8 @@ struct APRS_Ayarlari {
 APRS_Ayarlari Ayarlar;
 
 //forward declarations - fonksiyon tanimlarimiz
-void locationUpdate();
-char* deg_to_nmea(long deg, boolean is_lat);
+void KomutSatiriCalistir();
+char* deg_to_nmea(float deg, boolean is_lat);
 void eepromOku();
 void eepromaYaz();
 void VarsayilanAyarlar();
@@ -66,6 +66,9 @@ void konfigurasyonYazdir();
 void parametreOku(char *szParam, int iMaxLen);
 bool seridenAl();
 void seriyeGonder();
+void setPacket();
+void sndPacket();
+int getGpsData(boolean *newDataLoc);
 
 static void GPSisr( uint8_t c )
 {
@@ -76,40 +79,28 @@ void setup()
 {
   eepromOku();
   APRS_init();
+  //doReadPrams();
   char myCALL[] = "TA7W";
-  char Lat[] = "2134.00N";
-  char Lon[] = "01234.00E";
-  APRS_setCallsign(myCALL, 9);
-  APRS_setLat(Lat);
-  APRS_setLon(Lon);
-  //APRS_setPreamble(1000);
-  //APRS_setTail(50);
+//  APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
+  APRS_setCallsign(myCALL,9);
+  //APRS_setLat(Lat);
+  //APRS_setLon(Lon);
+  APRS_setPreamble(500);
+  APRS_setTail(50);
 
   DEBUG_PORT.begin(115200);
-  while (!Serial);
+  while (!DEBUG_PORT);
   DEBUG_PORT.print( F("hymTR APRS Tracker\n") );
   gpsPort.attachInterrupt( GPSisr );
   gpsPort.begin(9600);
 }
 
-int getGpsData(boolean *newDataLoc)
-{
- while (gps.available( gpsPort )) {
-    fix = gps.read();
-    if (fix.valid.location && fix.valid.time && fix.valid.altitude) {
-      *newDataLoc = true;
-      return fix.dateTime.minutes*60+fix.dateTime.seconds;
-    }
-  }
-return -1; 
-}
-
-
 
 void loop()
 {
   boolean newData = false;
-  
+  int smartBeaconInterval = 60;
+
   int gpsMinSec = getGpsData(&newData);
   //if (gps.available()) {
     // Print all the things!
@@ -118,67 +109,88 @@ void loop()
 
     if (gps.overrun()) {
     gps.overrun( false );
-    DEBUG_PORT.println( F("DATA OVERRUN: took too long to print GPS data!") );
+    DEBUG_PORT.println( F("DATA OVERRUN!") );
   }
   
-  if (newData && ((gpsMinSec % 20) == 0))
+  //Hiza gore Smart beacon suresi ayarlama
+  if (newData) {
+    if (fix.speed_kph() <= 10)                            smartBeaconInterval = 60 * 5;
+    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = 60 * 3;
+    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = 60 * 2;
+    if (fix.speed_kph() > 100)                            smartBeaconInterval = 60 * 1;
+  }
+
+  smartBeaconInterval = 20;
+//  if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
+  if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
   {
     newData = false;
     DEBUG_PORT.println("sending....");
-    APRS_sendLoc(comment, strlen(comment));
-    while(bitRead(PORTB,5)); //Wait for transmission to be completed
-    DEBUG_PORT.println("sent....");
-    //delay(25000);
+    setPacket();
+    sndPacket();
   }
   //DEBUG_PORT.print(".");
 
-}
-
-
-void locationUpdate() {
-  //String alt = alt + 1000000;
-  char Lat[] = "2134.00N";
-  char Lon[] = "01234.00E";
-  APRS_setLat(Lat);
-  APRS_setLon(Lon);
-  //APRS_setLat((char*)deg_to_nmea(lat, true));
-  //APRS_setLon((char*)deg_to_nmea(lon, false));
-
-  // TX
-  APRS_sendLoc(Ayarlar.APRS_Mesaj, strlen(Ayarlar.APRS_Mesaj));
-}
-
-char* deg_to_nmea(long deg, boolean is_lat) {
-  bool is_negative=0;
-  if (deg < 0) is_negative=1;
-
-  // Use the absolute number for calculation and update the buffer at the end
-  deg = labs(deg);
-
-  unsigned long b = (deg % 1000000UL) * 60UL;
-  unsigned long a = (deg / 1000000UL) * 100UL + b / 1000000UL;
-  b = (b % 1000000UL) / 10000UL;
-
-  conv_buf[0] = '0';
-  // in case latitude is a 3 digit number (degrees in long format)
-  if( a > 9999) {
-    snprintf(conv_buf , 6, "%04lu", a);
-  } else {
-    snprintf(conv_buf + 1, 5, "%04lu", a);
+//TODO: bunu Interrupt a tasiyacagim
+  /*
+   * Burada seri porttan komutlari okuyoruz
+   * TODO: bunu interrupt a tasimaliyiz
+   */
+  
+  while (DEBUG_PORT.available())
+  {
+    char komut = DEBUG_PORT.read();
+     if (komut == '!') {
+      KomutSatiriCalistir();
+      }
   }
 
-  conv_buf[5] = '.';
-  snprintf(conv_buf + 6, 3, "%02lu", b);
+
+}
+
+void setPacket()
+{
+    //    APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
+    char myCALL[6];// = "      ";
+    char Lat[8];// = "        ";
+    char Lon[9];// = "         ";
+    snprintf(myCALL,sizeof(myCALL),"%s",Ayarlar.APRS_CagriIsareti);
+    snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(fix.latitude(),true));
+    snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(fix.longitude(),false));
+    APRS_setLat(Lat);
+    APRS_setLon(Lon);
+    APRS_setCallsign(myCALL,Ayarlar.APRS_CagriIsaretiSSID);
+    APRS_setPreamble(1000);
+    APRS_setTail(50);
+}
+
+void sndPacket()
+{
+    char commentS[40]="                                       ";
+    //fix.heading();
+    snprintf(commentS,sizeof(commentS),"/A=%06d %s",fix.alt.whole,Ayarlar.APRS_Mesaj);
+    APRS_sendLoc(comment, strlen(comment));
+    while(bitRead(PORTB,5)); //Wait for transmission to be completed
+
+}
+
+char* deg_to_nmea(float deg, boolean is_lat) {
+  bool is_negative=0;
+  if (deg < 0) is_negative=1;
+  deg = abs(deg);
+  float minute = (deg - (int) deg) * 60;
+  sprintf(conv_buf,"%03d%02d.%02d",(int)deg,(int)minute,(int)(100*minute)%100);
   conv_buf[9] = '\0';
   if (is_lat) {
     if (is_negative) { conv_buf[8]='S';}
     else conv_buf[8]='N';
+    //DEBUG_PORT.println(conv_buf+1);
     return conv_buf+1;
-    // conv_buf +1 because we want to omit the leading zero
     }
   else {
     if (is_negative) {conv_buf[8]='W';}
     else conv_buf[8]='E';
+    //DEBUG_PORT.println(conv_buf);
     return conv_buf;
     }
 }
@@ -197,7 +209,7 @@ void eepromOku() {
     iCheckSum += Ayarlar.APRS_CagriIsareti[i];
   }
   if (iCheckSum != Ayarlar.CheckSum)  VarsayilanAyarlar();
-  Serial.println(F("EEPROM'dan okuma tamamlandi"));
+  DEBUG_PORT.println(F("EEPROM'dan okuma tamamlandi"));
 }
 
 /*
@@ -207,7 +219,7 @@ void eepromaYaz() {
   for (unsigned int i=0; i<sizeof(Ayarlar); i++) {
     EEPROM.write(i, *((char*)&Ayarlar + i));
   }
-  Serial.println("Eeproma yazildi");
+  DEBUG_PORT.println("Eeproma yazildi");
 }
 
 /*
@@ -216,40 +228,39 @@ void eepromaYaz() {
 void konfigurasyonYazdir()
 {
   /*
-  Serial.println("Mevcut Konfigurasyon Bilgileri");
-  Serial.println("------------------------------");
+  DEBUG_PORT.println("Mevcut Konfigurasyon Bilgileri");
+  DEBUG_PORT.println("------------------------------");
   */
-  //Serial.print(F("Cagri Isareti : "));  
-  Serial.println(Ayarlar.APRS_CagriIsareti);
-  //Serial.print(F("         SSID : -")); 
-  Serial.println(Ayarlar.APRS_CagriIsaretiSSID);
-  //Serial.print(F("        Hedef : "));  
-  Serial.println(Ayarlar.APRS_Destination);
-  //Serial.print(F("   Hedef SSID : -")); 
-  Serial.println(Ayarlar.APRS_DestinationSSID);  
-  //Serial.print(F("        Path1 : "));  
-  Serial.println(Ayarlar.APRS_Path1);
-  //Serial.print(F("   Path1 SSID : -")); 
-  Serial.println(Ayarlar.APRS_Path1SSID);
-  //Serial.print(F("        Path2 : "));  
-  Serial.println(Ayarlar.APRS_Path2);
-  //Serial.print(F("   Path2 SSID : -")); 
-  Serial.println(Ayarlar.APRS_Path2SSID);
-  //Serial.print(F("       Sembol : "));  
-  Serial.println(Ayarlar.APRS_Sembolu);
-  //Serial.print(F("  Sembol Tipi : "));  
-  Serial.println(Ayarlar.APRS_SembolTabi);
-  //Serial.print(F("  Beacon Tipi : "));  
-  Serial.println(Ayarlar.APRS_BeaconTipi); //0=sure beklemeli, 1=Smart Beacon
-  //Serial.print(F("Beacon Suresi : "));  
-  Serial.println(Ayarlar.APRS_BeaconSuresi);
-  //Serial.print(F("     GPS Hizi : "));  
-  Serial.println(Ayarlar.APRS_GPSSeriHizi);    
-  //Serial.print(F("        Mesaj : "));  
-  Serial.println(Ayarlar.APRS_Mesaj);
-  //Serial.print(F("Kontrol (CRC) : "));  
-  Serial.println(Ayarlar.CheckSum);   
-  
+  DEBUG_PORT.print(F("Cagri Isareti : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_CagriIsareti);
+  DEBUG_PORT.print(F("         SSID : -")); 
+  DEBUG_PORT.println(Ayarlar.APRS_CagriIsaretiSSID);
+  DEBUG_PORT.print(F("        Hedef : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_Destination);
+  DEBUG_PORT.print(F("   Hedef SSID : -")); 
+  DEBUG_PORT.println(Ayarlar.APRS_DestinationSSID);  
+  DEBUG_PORT.print(F("        Path1 : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_Path1);
+  DEBUG_PORT.print(F("   Path1 SSID : -")); 
+  DEBUG_PORT.println(Ayarlar.APRS_Path1SSID);
+  DEBUG_PORT.print(F("        Path2 : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_Path2);
+  DEBUG_PORT.print(F("   Path2 SSID : -")); 
+  DEBUG_PORT.println(Ayarlar.APRS_Path2SSID);
+  DEBUG_PORT.print(F("       Sembol : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_Sembolu);
+  DEBUG_PORT.print(F("  Sembol Tipi : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_SembolTabi);
+  DEBUG_PORT.print(F("  Beacon Tipi : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_BeaconTipi); //0=sure beklemeli, 1=Smart Beacon
+  DEBUG_PORT.print(F("Beacon Suresi : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_BeaconSuresi);
+  DEBUG_PORT.print(F("     GPS Hizi : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_GPSSeriHizi);    
+  DEBUG_PORT.print(F("        Mesaj : "));  
+  DEBUG_PORT.println(Ayarlar.APRS_Mesaj);
+  DEBUG_PORT.print(F("Kontrol (CRC) : "));  
+  DEBUG_PORT.println(Ayarlar.CheckSum);   
 }
 
 void VarsayilanAyarlar() {
@@ -274,15 +285,15 @@ void VarsayilanAyarlar() {
 void KomutSatiriCalistir() {
   byte komut;
 
-  Serial.println(F("hymTR Konfigurasyon Arayuzu"));
-  Serial.print('#');
+  DEBUG_PORT.println(F("hymTR Konfigurasyon Arayuzu"));
+  DEBUG_PORT.print('#');
   delay(50);
 
   while (komut != 'Q') {
     //digitalWrite(13, !digitalRead(13)); //Gonderme yaptigimizda tracker i konsol modundan cikariyoruz
     delay(50);
-    if (Serial.available()) {
-      komut = Serial.read();
+    if (DEBUG_PORT.available()) {
+      komut = DEBUG_PORT.read();
 
       if (komut == 'R') {
         eepromOku();    
@@ -294,25 +305,25 @@ void KomutSatiriCalistir() {
       }
 
       if (komut == 'W') {
-        Serial.println(F("Konfigurasyon kaydediliyor..."));
+        DEBUG_PORT.println(F("Konfigurasyon kaydediliyor..."));
         delay(500);
-        Serial.println(VERSIYON);
+        DEBUG_PORT.println(VERSIYON);
        konfigurasyonYazdir();
         if (seridenAl()) {
               eepromaYaz();
             } else {
-          //Serial.println(F("hata  olustu..."));
+          //DEBUG_PORT.println(F("hata  olustu..."));
         }
       }
       
       if (komut == 'D') {
-        Serial.println(F("Varsayilan konfigurasyona donuluyor"));
+        DEBUG_PORT.println(F("Varsayilan konfigurasyona donuluyor"));
         VarsayilanAyarlar();        
       }
-      Serial.println('#');
-    } //Serial.available
+      DEBUG_PORT.println('#');
+    } //DEBUG_PORT.available
  } //komut != Q
- Serial.println(F("Konfigurasyon midundan cikiliyor"));
+ DEBUG_PORT.println(F("Konfigurasyon modundan cikiliyor"));
 } //komutSatiriCalistir
 
 
@@ -329,11 +340,11 @@ void parametreOku(char *szParam, int iMaxLen) {
 
   while (millis() < iMilliTimeout) {
 
-    if (Serial.available()) {
-      c = Serial.read();
+    if (DEBUG_PORT.available()) {
+      c = DEBUG_PORT.read();
 
       if (c == 0x09 || c == 0x04) {
-        Serial.println();
+        DEBUG_PORT.println();
         return;
       }
       if (iSize < iMaxLen) {
@@ -349,12 +360,12 @@ bool seridenAl() {
   char szParam[45]; //en uzun mesaajdan daha uzun 45>41
   unsigned long iMilliTimeout = millis() + 10000;    
   while (millis() < iMilliTimeout) {
-  while (!Serial.available()) { } //veri gelmesini bekle
-    if (Serial.read() == 0x01) {
+  while (!DEBUG_PORT.available()) { } //veri gelmesini bekle
+    if (DEBUG_PORT.read() == 0x01) {
       parametreOku(szParam, sizeof(szParam));
       if (strcmp(szParam, VERSIYON) != 0) {
-        Serial.println(szParam);
-          Serial.println(F("E99 Versiyonlar uyumsuz..."));
+        DEBUG_PORT.println(szParam);
+          DEBUG_PORT.println(F("E99 Versiyonlar uyumsuz..."));
         return false;
       }
     
@@ -368,10 +379,12 @@ bool seridenAl() {
       strcpy(Ayarlar.APRS_Destination, szParam);
       parametreOku(szParam, 1);    //SSID
       Ayarlar.APRS_DestinationSSID = szParam[0];
+
       parametreOku(szParam, sizeof(Ayarlar.APRS_Path1));    //Path1
       strcpy(Ayarlar.APRS_Path1, szParam);
       parametreOku(szParam, 1);    //SSID
       Ayarlar.APRS_Path1SSID = szParam[0];
+
       parametreOku(szParam, sizeof(Ayarlar.APRS_Path2));    //Path2
       strcpy(Ayarlar.APRS_Path2, szParam);
       parametreOku(szParam, 1);    //SSID
@@ -416,41 +429,113 @@ bool seridenAl() {
  * Elimizdeki CONFIG degiskenini byte byte PC'ye gonderiyoruz
  */
 void seriyeGonder() {
-        Serial.print(F("{"));    //JSON Baslangici
-        Serial.print(F("'V':'"));
-        Serial.print(VERSIYON);
-        Serial.print(F("','CagriIsareti':'"));
-        Serial.print(Ayarlar.APRS_CagriIsareti);
-        Serial.print(F("','CagriIsaretiSSID':"));
-        Serial.print(Ayarlar.APRS_CagriIsaretiSSID);
-        Serial.print(F(",'Destination':'"));
-        Serial.print(Ayarlar.APRS_Destination);
-        Serial.print(F("','DestinationSSID':"));
-        Serial.print(Ayarlar.APRS_DestinationSSID);
-        Serial.print(F(",'Path1':'"));
-        Serial.print(Ayarlar.APRS_Path1);
-        Serial.print(F("','Path1SSID':"));
-        Serial.print(Ayarlar.APRS_Path1SSID);
-        Serial.print(F(",'Path2':'"));
-        Serial.print(Ayarlar.APRS_Path2);
-        Serial.print(F("','Path2SSID':"));
-        Serial.print(Ayarlar.APRS_Path2SSID);
+        DEBUG_PORT.print(F("{"));    //JSON Baslangici
+        DEBUG_PORT.print(F("'V':'"));
+        DEBUG_PORT.print(VERSIYON);
+        DEBUG_PORT.print(F("','CagriIsareti':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_CagriIsareti);
+        DEBUG_PORT.print(F("','CagriIsaretiSSID':"));
+        DEBUG_PORT.print(Ayarlar.APRS_CagriIsaretiSSID);
+        DEBUG_PORT.print(F(",'Destination':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_Destination);
+        DEBUG_PORT.print(F("','DestinationSSID':"));
+        DEBUG_PORT.print(Ayarlar.APRS_DestinationSSID);
+        DEBUG_PORT.print(F(",'Path1':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_Path1);
+        DEBUG_PORT.print(F("','Path1SSID':"));
+        DEBUG_PORT.print(Ayarlar.APRS_Path1SSID);
+        DEBUG_PORT.print(F(",'Path2':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_Path2);
+        DEBUG_PORT.print(F("','Path2SSID':"));
+        DEBUG_PORT.print(Ayarlar.APRS_Path2SSID);
         //Symbol
-        Serial.print(F(",'Sembol':'"));
-        Serial.print(Ayarlar.APRS_Sembolu);
-        Serial.print(F("','SembolTabi':'"));
-        Serial.print(Ayarlar.APRS_SembolTabi);
+        DEBUG_PORT.print(F(",'Sembol':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_Sembolu);
+        DEBUG_PORT.print(F("','SembolTabi':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_SembolTabi);
         //Beacon Type
-        Serial.print(F("','BeaconTipi':"));
-        Serial.print(Ayarlar.APRS_BeaconTipi, DEC);
-        Serial.print(F(",'BeaconSuresi':"));
+        DEBUG_PORT.print(F("','BeaconTipi':"));
+        DEBUG_PORT.print(Ayarlar.APRS_BeaconTipi, DEC);
+        DEBUG_PORT.print(F(",'BeaconSuresi':"));
         //Beacon - Simple Delay
-        Serial.print(Ayarlar.APRS_BeaconSuresi, DEC);
+        DEBUG_PORT.print(Ayarlar.APRS_BeaconSuresi, DEC);
         //Status Message
-        Serial.print(F(",'Mesaj':'"));
-        Serial.print(Ayarlar.APRS_Mesaj);
-        //GPS Serial Data
-        Serial.print(F("','GPSHizi':"));
-        Serial.print(Ayarlar.APRS_GPSSeriHizi, DEC);      
-        Serial.print(F("}")); //JSON Sonu 
+        DEBUG_PORT.print(F(",'Mesaj':'"));
+        DEBUG_PORT.print(Ayarlar.APRS_Mesaj);
+        //GPS DEBUG_PORT Data
+        DEBUG_PORT.print(F("','GPSHizi':"));
+        DEBUG_PORT.print(Ayarlar.APRS_GPSSeriHizi, DEC);      
+        DEBUG_PORT.print(F("}")); //JSON Sonu 
 }
+
+
+int getGpsData(boolean *newDataLoc)
+{
+ while (gps.available( gpsPort )) {
+    fix = gps.read();
+    if (fix.valid.location && fix.valid.time && fix.valid.altitude) {
+      *newDataLoc = true;
+      return fix.dateTime.minutes*60+fix.dateTime.seconds;
+    }
+  }
+return -1; 
+}
+
+
+//-----------------
+//  Print utilities
+/*
+static void repeat( char c, int8_t len )
+{
+  for (int8_t i=0; i<len; i++)
+    DEBUG_PORT.write( c );
+}
+static void printInvalid( int8_t len )
+{
+  DEBUG_PORT.write( ' ' );
+  repeat( '*', abs(len)-1 );
+}
+
+static void print( float val, bool valid, int8_t len, int8_t prec )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    char s[16];
+    dtostrf( val, len, prec, s );
+    DEBUG_PORT.print( s );
+  }
+}
+static void print( int32_t val, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    char s[16];
+    ltoa( val, s, 10 );
+    repeat( ' ', len - strlen(s) );
+    DEBUG_PORT.print( s );
+  }
+}
+
+static void print( const __FlashStringHelper *str, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    int slen = strlen_P( (const char *) str );
+    repeat( ' ', len-slen );
+    DEBUG_PORT.print( str );
+  }
+}
+
+static void print( const NeoGPS::time_t & dt, bool valid, int8_t len )
+{
+  if (!valid) {
+    printInvalid( len );
+  } else {
+    DEBUG_PORT.write( ' ' );
+    Serial << dt; 
+  }
+}
+*/
