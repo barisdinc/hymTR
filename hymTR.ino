@@ -286,7 +286,7 @@ void konfigurasyonYazdir()
 void VarsayilanAyarlar() {
   strcpy(Ayarlar.APRS_CagriIsareti, "TA7W"); 
   Ayarlar.APRS_CagriIsaretiSSID = '9';
-  strcpy(Ayarlar.APRS_Destination, "APRS  ");
+  strcpy(Ayarlar.APRS_Destination, "HYMTR ");
   Ayarlar.APRS_DestinationSSID = '0';
   strcpy(Ayarlar.APRS_Path1, "WIDE1 ");
   Ayarlar.APRS_Path1SSID = '1';
