@@ -37,6 +37,15 @@ char comment []= "TAMSAT hymTR APRS Tracker Test";
 #define CONV_BUF_SIZE 16
 static char conv_buf[CONV_BUF_SIZE];
 
+enum p_type {
+  pt_normal,
+  pt_phg,
+  pt_cse,
+  pt_dir
+};
+
+p_type curr_pt = pt_normal;
+
 struct APRS_Ayarlari {
   char APRS_CagriIsareti[7];
   char APRS_CagriIsaretiSSID;
@@ -122,14 +131,14 @@ void loop()
   
   //Hiza gore Smart beacon suresi ayarlama
   if (newData) {
-    if (fix.speed_kph() <= 10)                            smartBeaconInterval = 60 * 5;
-    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = 60 * 3;
-    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = 60 * 2;
-    if (fix.speed_kph() > 100)                            smartBeaconInterval = 60 * 1;
+    if (fix.speed_kph() <= 10)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 5;
+    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 3;
+    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 2;
+    if (fix.speed_kph() > 100)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 1;
   }
 
 //SMART BEACON zamanlaamasi yapmasini istemiyorsak alttaki satirda bir sure (saniye) belirtebiliriz
-  smartBeaconInterval = 20;
+//  smartBeaconInterval = 20;
   if (newData && ((gpsMinSec % smartBeaconInterval) == 0))
   {
     newData = false;
@@ -185,7 +194,16 @@ void sndPacket()
 {
     char commentS[40]="                                       ";
     snprintf(commentS,sizeof(commentS),"/A=%06d %s",(int)(fix.alt.whole*3.28),Ayarlar.APRS_Mesaj);
-    APRS_sendLoc(commentS, strlen(commentS),' '); // ' ' no extension, 'p' PHG, 'c' CSE/SPD, 'd' DIR/SPD 
+    // APRS_sendLoc 3rd parameter : ' ' no extension, 'p' PHG, 'c' CSE/SPD, 'd' DIR/SPD 
+    if (curr_pt == pt_normal) APRS_sendLoc(commentS, strlen(commentS),' '); 
+    if (curr_pt == pt_phg)    APRS_sendLoc(commentS, strlen(commentS),'p'); 
+    if (curr_pt == pt_cse)    APRS_sendLoc(commentS, strlen(commentS),'c'); 
+    if (curr_pt == pt_dir)    APRS_sendLoc(commentS, strlen(commentS),'d'); 
+    if (curr_pt == pt_normal)   curr_pt = pt_phg;
+    else if (curr_pt == pt_phg) curr_pt = pt_cse;
+    else if (curr_pt == pt_cse) curr_pt = pt_dir;
+    else if (curr_pt == pt_dir) curr_pt = pt_normal;
+
     //Buraya bir akil ekleyecegim... su sekilde
     //Eger hizi degismisse 'c' veya 'd' paketi gonderecegim
     //eger degismemisse standart paket gonderecegim
