@@ -131,10 +131,10 @@ void loop()
   
   //Hiza gore Smart beacon suresi ayarlama
   if (newData) {
-    if (fix.speed_kph() <= 10)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 5;
-    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 3;
-    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 2;
-    if (fix.speed_kph() > 100)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 60 * 1;
+    if (fix.speed_kph() <= 10)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 20 * 5;
+    if (fix.speed_kph() > 10  and fix.speed_kph() <= 50)  smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 20 * 3;
+    if (fix.speed_kph() > 50  and fix.speed_kph() <= 100) smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 20 * 2;
+    if (fix.speed_kph() > 100)                            smartBeaconInterval = Ayarlar.APRS_BeaconSuresi * 20 * 1;
   }
 
 //SMART BEACON zamanlaamasi yapmasini istemiyorsak alttaki satirda bir sure (saniye) belirtebiliriz
@@ -177,6 +177,7 @@ void setPacket()
     APRS_setLat(Lat);
     APRS_setLon(Lon);
     APRS_setCallsign(myCALL,Ayarlar.APRS_CagriIsaretiSSID);
+    APRS_setDestination(Ayarlar.APRS_Destination, Ayarlar.APRS_DestinationSSID);
     APRS_setPreamble(1000);
     APRS_setTail(50);
     APRS_setPower(1);
