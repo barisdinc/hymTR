@@ -97,13 +97,9 @@ void setup()
   eepromOku();
   APRS_init();
   //doReadPrams();
-  char myCALL[] = "TA7W";
-//  APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
-  APRS_setCallsign(myCALL,9);
-  //APRS_setLat(Lat);
-  //APRS_setLon(Lon);
-  APRS_setPreamble(500);
-  APRS_setTail(50);
+  //APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
+  APRS_setPreamble(500); //TODO: read from settings
+  APRS_setTail(50);      //TODO: read from settings
 
   DEBUG_PORT.begin(115200);
   while (!DEBUG_PORT);
@@ -168,7 +164,7 @@ void loop()
 void setPacket()
 {
     //    APRS_setCallsign(Ayarlar.APRS_CagriIsareti, Ayarlar.APRS_CagriIsaretiSSID);
-    char myCALL[6];// = "      ";
+    char myCALL[7];// = "      ";
     char Lat[9];// = "        ";
     char Lon[] = "         ";
     snprintf(myCALL,sizeof(myCALL),"%s",Ayarlar.APRS_CagriIsareti);
