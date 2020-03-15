@@ -41,7 +41,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=40100",
+                "PLATFORMIO=40201",
                 "ARDUINO_AVR_NANO",
                 "F_CPU=16000000L",
                 "ARDUINO_ARCH_AVR",
@@ -52,7 +52,11 @@
             "intelliSenseMode": "clang-x64",
             "cStandard": "c11",
             "cppStandard": "c++11",
-            "compilerPath": "\"/home/baris/.platformio/packages/toolchain-atmelavr/bin/avr-gcc\" -mmcu=atmega328p"
+            "compilerPath": "/home/baris/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega328p",
+                ""
+            ]
         }
     ],
     "version": 4
