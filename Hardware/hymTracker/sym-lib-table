@@ -1,4 +1,5 @@
 (sym_lib_table
   (lib (name hymTRacker)(type Legacy)(uri ${KIPRJMOD}/hymTRacker.lib)(options "")(descr ""))
   (lib (name mylibs)(type Legacy)(uri ${KIPRJMOD}/mylibs.lib)(options "")(descr ""))
+  (lib (name hymTracker-rescue)(type Legacy)(uri ${KIPRJMOD}/hymTracker-rescue.lib)(options "")(descr ""))
 )
