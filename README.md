@@ -30,5 +30,5 @@ Ocak 2020
 
 Proje destekcileri :
 --------------------
-TA2GY Cem Karagoz
-TA6AEU Emre Keles
+- TA2GY Cem Karagoz
+- TA6AEU Emre Keles
