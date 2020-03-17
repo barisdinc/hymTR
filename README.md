@@ -23,4 +23,7 @@ Eklenmesi planlanan ozellikler :
 
 PC Yonetim arayuzu programi "hymTR Ayar Programi" ayri bir repository icindedir.
 
+Donanim detaylari icin <A HREF="https://github.com/barisdinc/hymTR/blob/master/Hardware/README.md">Donanim Sayfasi'na bakabilirsiniz</A>
+
+
 Ocak 2020
