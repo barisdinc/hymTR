@@ -290,8 +290,28 @@
     (pad 1 thru_hole circle (at -7.62 -5.08 180) (size 1.524 1.524) (drill 0.762) (layers *.Cu *.Mask)
       (net 32 /Vbatarya))
     (model "${KIPRJMOD}/hymTracker.pretty/D-SUN dc-dc step down converter.step"
-      (offset (xyz 1.5 -2 0))
+      (offset (xyz 1.5 -1.5 0))
       (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model ${KISYS3DMOD}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x02_P1.27mm_Vertical.wrl
+      (offset (xyz -7.5 -5.5 0))
+      (scale (xyz 1.4 2.1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model ${KISYS3DMOD}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x02_P1.27mm_Vertical.wrl
+      (offset (xyz -7.5 5 0))
+      (scale (xyz 1.4 2.1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model ${KISYS3DMOD}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x02_P1.27mm_Vertical.wrl
+      (offset (xyz 11 5.5 0))
+      (scale (xyz 1.4 2.1 1))
+      (rotate (xyz 0 0 0))
+    )
+    (model ${KISYS3DMOD}/Connector_PinHeader_1.27mm.3dshapes/PinHeader_1x02_P1.27mm_Vertical.wrl
+      (offset (xyz 11 -5.5 0))
+      (scale (xyz 1.4 2.1 1))
       (rotate (xyz 0 0 0))
     )
   )
