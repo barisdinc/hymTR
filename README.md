@@ -27,3 +27,8 @@ Donanim detaylari icin <A HREF="https://github.com/barisdinc/hymTR/blob/master/H
 
 
 Ocak 2020
+
+Proje destekcileri :
+--------------------
+TA2GY Cem Karagoz
+TA6AEU Emre Keles
