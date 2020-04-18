@@ -2,7 +2,7 @@
 
   (general
     (thickness 1.6)
-    (drawings 16)
+    (drawings 20)
     (tracks 352)
     (zones 0)
     (modules 19)
@@ -1007,6 +1007,10 @@
     )
   )
 
+  (gr_circle (center 96 71.15) (end 96 72.42) (layer Edge.Cuts) (width 0.05) (tstamp 5E9AA71E))
+  (gr_circle (center 66.32 71.1) (end 66.32 72.37) (layer Edge.Cuts) (width 0.05) (tstamp 5E9AA719))
+  (gr_circle (center 96 51.05) (end 96 52.32) (layer Edge.Cuts) (width 0.05) (tstamp 5E9AA717))
+  (gr_circle (center 66.3 51.05) (end 66.3 52.32) (layer Edge.Cuts) (width 0.05) (tstamp 5E9AA715))
   (gr_text "TAMSAT\nhymTracker" (at 89.408 51.816) (layer B.Cu) (tstamp 5E704BA7)
     (effects (font (size 1.5 1.5) (thickness 0.3)) (justify mirror))
   )
