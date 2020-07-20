@@ -33,7 +33,7 @@
 
 NMEAGPS  gps; // This parses the GPS characters
 gps_fix  fix; // This holds on to the latest values
-char comment []= "TAMSAT hymTR APRS Tracker Test";
+char comment []= "iZCi hymTR APRS Tracker Test";
 #define CONV_BUF_SIZE 16
 static char conv_buf[CONV_BUF_SIZE];
 
@@ -328,7 +328,7 @@ void VarsayilanAyarlar() {
   Ayarlar.APRS_SembolTabi = '/';
   Ayarlar.APRS_BeaconTipi = 3;
   Ayarlar.APRS_BeaconSuresi = 1;
-  strcpy(Ayarlar.APRS_Mesaj, "TAMSAT hymTR APRS Tracker");
+  strcpy(Ayarlar.APRS_Mesaj, "iZCi hymTR APRS Tracker");
   Ayarlar.APRS_GPSSeriHizi = 9600;
   Ayarlar.gps_varyok = 0;
   strcpy(Ayarlar.latitude, "3955.50N");
