@@ -576,8 +576,13 @@ int getGpsData(boolean *newDataLoc)
 {
  while (gps.available( gpsPort )) {
     fix = gps.read();
+    //DEBUG_PORT.println(fix.satellites);
+    //DEBUG_PORT.println(fix.status);
+    //DEBUG_PORT.println(fix.dateTime);
+    //DEBUG_PORT.println("--------------------------");
     if (fix.valid.location && fix.valid.time && fix.valid.altitude) {
       *newDataLoc = true;
+      //DEBUG_PORT.print("GOT FIXXX");
       return fix.dateTime.minutes*60+fix.dateTime.seconds;
     }
   }
