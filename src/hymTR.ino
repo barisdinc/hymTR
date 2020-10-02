@@ -330,7 +330,7 @@ void VarsayilanAyarlar() {
   Ayarlar.APRS_BeaconSuresi = 1;
   strcpy(Ayarlar.APRS_Mesaj, "iZCi hymTR APRS Tracker");
   Ayarlar.APRS_GPSSeriHizi = 9600;
-  Ayarlar.gps_varyok = 0;
+  Ayarlar.gps_varyok = 1;
   strcpy(Ayarlar.latitude, "3955.50N");
   strcpy(Ayarlar.longitude, "3250.22E");
   strcpy(Ayarlar.altitude, " 2400");
