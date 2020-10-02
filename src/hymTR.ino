@@ -435,9 +435,9 @@ bool seridenAl() {
       Ayarlar.APRS_CagriIsaretiSSID = szParam[0];
 
 
-      //parametreOku(szParam, sizeof(Ayarlar.APRS_Destination));    //Destination
+      parametreOku(szParam, sizeof(Ayarlar.APRS_Destination));    //Destination
       //strcpy(Ayarlar.APRS_Destination, szParam);
-      //parametreOku(szParam, 1);    //SSID
+      parametreOku(szParam, 1);    //SSID
       //Ayarlar.APRS_DestinationSSID = szParam[0];
 
       parametreOku(szParam, sizeof(Ayarlar.APRS_Path1));    //Path1
