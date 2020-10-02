@@ -316,9 +316,9 @@ void konfigurasyonYazdir()
 }
 
 void VarsayilanAyarlar() {
-  strcpy(Ayarlar.APRS_CagriIsareti, "iZCi  "); 
+  strcpy(Ayarlar.APRS_CagriIsareti, "iZCi01"); 
   Ayarlar.APRS_CagriIsaretiSSID = '9';
-  strcpy(Ayarlar.APRS_Destination, "iZCi  ");
+  strcpy(Ayarlar.APRS_Destination, "APiZCi");
   Ayarlar.APRS_DestinationSSID = '0';
   strcpy(Ayarlar.APRS_Path1, "WIDE1 ");
   Ayarlar.APRS_Path1SSID = '1';
@@ -435,10 +435,10 @@ bool seridenAl() {
       Ayarlar.APRS_CagriIsaretiSSID = szParam[0];
 
 
-      parametreOku(szParam, sizeof(Ayarlar.APRS_Destination));    //Destination
-      strcpy(Ayarlar.APRS_Destination, szParam);
-      parametreOku(szParam, 1);    //SSID
-      Ayarlar.APRS_DestinationSSID = szParam[0];
+      //parametreOku(szParam, sizeof(Ayarlar.APRS_Destination));    //Destination
+      //strcpy(Ayarlar.APRS_Destination, szParam);
+      //parametreOku(szParam, 1);    //SSID
+      //Ayarlar.APRS_DestinationSSID = szParam[0];
 
       parametreOku(szParam, sizeof(Ayarlar.APRS_Path1));    //Path1
       strcpy(Ayarlar.APRS_Path1, szParam);
