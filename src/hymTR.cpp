@@ -8,6 +8,7 @@
 #define RX_PIN 11  //GPS TX pin 
 #define TX_PIN 12  //GPS RX pin
 
+#include <Arduino.h>
 #include <LibAPRS_Tracker.h>
 #include <NMEAGPS.h>
 #include <GPSport.h>
@@ -19,6 +20,7 @@
  *  GPSport.h icinde #include <NeoSWSerial.h> satirini acip #include <AltSoftSerial.h> satirini kapatiniz
  *  NMEAGPS_cfg.h icinde NMEAGPS_INTERRUPT_PROCESSING define satirini acmaniz ya da burda tanimlamaniz gerekir
  */
+#define NMEAGPS_INTERRUPT_PROCESSING
 
 //Genel Tanimlamalar
 #define VERSIYON "01012020a"
@@ -170,6 +172,7 @@ void setPacket()
     snprintf(myCALL,sizeof(myCALL),"%s",Ayarlar.APRS_CagriIsareti);
     snprintf(Lat,sizeof(Lat),"%s",deg_to_nmea(fix.latitude(),true));
     snprintf(Lon,sizeof(Lon),"%s",deg_to_nmea(fix.longitude(),false));
+    APRS_setSymbol(Ayarlar.APRS_Sembolu);
     APRS_setLat(Lat);
     APRS_setLon(Lon);
     APRS_setCallsign(myCALL,Ayarlar.APRS_CagriIsaretiSSID);
@@ -181,7 +184,8 @@ void setPacket()
     APRS_setGain(1);
     APRS_setDirectivity(1);
     int heading = (int)fix.heading();
-    int speed = (int)fix.speed_kph();
+    float speedf = fix.speed_kph();
+    int speed = (int)speedf;
     APRS_setDirection(heading);
     APRS_setCourse(heading);
     APRS_setSpeed(speed);
